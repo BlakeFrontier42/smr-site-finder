@@ -97,14 +97,14 @@ export default function About() {
 
           <div className="border-t border-slate-800/50 pt-6">
             <p className="text-sm text-slate-500">
-              Built by <span className="text-cyan-400">Blake @ Frontier Labs</span> — exploring the intersection of AI, energy, and frontier technology.
+              Built by <a href="https://x.com/BlakeFrontier42" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 transition-colors">@BlakeFrontier42</a> — exploring the intersection of AI, energy, and frontier technology.
             </p>
             <div className="flex gap-4 mt-3">
-              <a href="https://x.com/BlakeFrontierLabs" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-cyan-400 transition-colors">
-                <Twitter className="w-5 h-5" />
+              <a href="https://x.com/BlakeFrontier42" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-slate-500 hover:text-cyan-400 transition-colors text-sm">
+                <Twitter className="w-5 h-5" /> @BlakeFrontier42
               </a>
-              <a href="https://github.com/BlakeFrontierLabs" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-cyan-400 transition-colors">
-                <Github className="w-5 h-5" />
+              <a href="https://github.com/BlakeFrontier42" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-slate-500 hover:text-cyan-400 transition-colors text-sm">
+                <Github className="w-5 h-5" /> GitHub
               </a>
             </div>
           </div>

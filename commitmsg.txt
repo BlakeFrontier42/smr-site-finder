@@ -1,1 +1,1 @@
-feat: add About page with methodology, data sources, and stats
+feat: add SMR Companies page, @BlakeFrontier42 branding, header nav

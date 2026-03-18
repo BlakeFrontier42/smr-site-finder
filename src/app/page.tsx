@@ -58,6 +58,9 @@ export default function Home() {
             <div className="flex items-center gap-1.5 text-amber-400"><Zap className="w-3.5 h-3.5" />{siteStats.totalCapacity}</div>
             <div className="flex items-center gap-1.5 text-emerald-400"><BarChart3 className="w-3.5 h-3.5" />Avg score: {siteStats.avgScore}</div>
           </div>
+          <Link href="/companies" className="text-xs text-slate-500 hover:text-cyan-400 transition-colors hidden sm:block">
+            SMR Companies
+          </Link>
           <Link href="/about" className="text-slate-500 hover:text-cyan-400 transition-colors">
             <Info className="w-5 h-5" />
           </Link>
@@ -124,6 +127,13 @@ export default function Home() {
         {/* Map Area */}
         <div className="flex-1 relative">
           <SiteMap selectedSite={selectedSite} onSelectSite={setSelectedSite} filter={filter} />
+
+          {/* Watermark */}
+          <div className="absolute bottom-4 right-4 bg-[#0d1117]/80 border border-slate-800/50 rounded-lg px-3 py-1.5 backdrop-blur z-[1000]">
+            <a href="https://x.com/BlakeFrontier42" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 hover:text-cyan-400 transition-colors">
+              Built by @BlakeFrontier42
+            </a>
+          </div>
 
           {/* Legend */}
           <div className="absolute bottom-4 left-4 bg-[#0d1117]/90 border border-cyan-900/30 rounded-xl p-3 backdrop-blur z-[1000]">
