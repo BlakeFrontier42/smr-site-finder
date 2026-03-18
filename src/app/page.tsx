@@ -3,7 +3,8 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { smrSites, siteStats, SMRSite } from "@/data/sites";
-import { Atom, MapPin, Zap, Droplets, Activity, TrendingUp, ChevronRight, Filter, X, BarChart3 } from "lucide-react";
+import Link from "next/link";
+import { Atom, MapPin, Zap, Droplets, Activity, TrendingUp, ChevronRight, Filter, X, BarChart3, Info } from "lucide-react";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 
@@ -57,6 +58,9 @@ export default function Home() {
             <div className="flex items-center gap-1.5 text-amber-400"><Zap className="w-3.5 h-3.5" />{siteStats.totalCapacity}</div>
             <div className="flex items-center gap-1.5 text-emerald-400"><BarChart3 className="w-3.5 h-3.5" />Avg score: {siteStats.avgScore}</div>
           </div>
+          <Link href="/about" className="text-slate-500 hover:text-cyan-400 transition-colors">
+            <Info className="w-5 h-5" />
+          </Link>
           <button onClick={() => setShowPanel(!showPanel)}
             className="md:hidden bg-[#161b22] border border-slate-800 p-2 rounded-lg text-cyan-400">
             {showPanel ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />}

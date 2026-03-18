@@ -1,1 +1,1 @@
-feat: SMR Site Finder MVP - interactive map of optimal nuclear reactor locations
+feat: add About page with methodology, data sources, and stats
