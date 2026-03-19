@@ -1,1 +1,1 @@
-feat: add SMR Companies page, @BlakeFrontier42 branding, header nav
+feat: expand to 30 sites, add confirmed projects, enhanced detail panel, company/reactor/timeline/funding data

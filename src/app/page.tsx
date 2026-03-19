@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { smrSites, siteStats, SMRSite } from "@/data/sites";
 import Link from "next/link";
-import { Atom, MapPin, Zap, Droplets, Activity, TrendingUp, ChevronRight, Filter, X, BarChart3, Info } from "lucide-react";
+import { smrSites, siteStats, SMRSite } from "@/data/sites";
+import { Atom, MapPin, Zap, Droplets, Activity, TrendingUp, ChevronRight, Filter, X, BarChart3, Info, Building2, Calendar, DollarSign } from "lucide-react";
 
 const SiteMap = dynamic(() => import("@/components/SiteMap"), { ssr: false });
 
@@ -13,6 +13,7 @@ const typeColors: Record<string, string> = {
   "brownfield": "purple",
   "greenfield": "emerald",
   "existing-nuclear": "cyan",
+  "confirmed-project": "red",
 };
 
 const typeEmoji: Record<string, string> = {
@@ -20,6 +21,7 @@ const typeEmoji: Record<string, string> = {
   "brownfield": "🏗️",
   "greenfield": "🌱",
   "existing-nuclear": "⚛️",
+  "confirmed-project": "🔴",
 };
 
 const typeLabels: Record<string, string> = {
@@ -27,10 +29,11 @@ const typeLabels: Record<string, string> = {
   "brownfield": "Brownfield",
   "greenfield": "Greenfield",
   "existing-nuclear": "Existing Nuclear",
+  "confirmed-project": "Confirmed Project",
 };
 
-const demandColors = { high: "text-red-400", medium: "text-amber-400", low: "text-emerald-400" };
-const seismicColors = { low: "text-emerald-400", moderate: "text-amber-400", high: "text-red-400" };
+const demandColors: Record<string, string> = { high: "text-red-400", medium: "text-amber-400", low: "text-emerald-400" };
+const seismicColors: Record<string, string> = { low: "text-emerald-400", moderate: "text-amber-400", high: "text-red-400" };
 
 export default function Home() {
   const [selectedSite, setSelectedSite] = useState<SMRSite | null>(null);
@@ -55,8 +58,9 @@ export default function Home() {
         <div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-3 text-xs">
             <div className="flex items-center gap-1.5 text-cyan-400"><MapPin className="w-3.5 h-3.5" />{siteStats.totalSites} sites</div>
-            <div className="flex items-center gap-1.5 text-amber-400"><Zap className="w-3.5 h-3.5" />{siteStats.totalCapacity}</div>
-            <div className="flex items-center gap-1.5 text-emerald-400"><BarChart3 className="w-3.5 h-3.5" />Avg score: {siteStats.avgScore}</div>
+            <div className="flex items-center gap-1.5 text-red-400"><Zap className="w-3.5 h-3.5" />{siteStats.confirmedProjects} confirmed</div>
+            <div className="flex items-center gap-1.5 text-amber-400"><Building2 className="w-3.5 h-3.5" />{siteStats.coalRetirements} coal conversions</div>
+            <div className="flex items-center gap-1.5 text-emerald-400"><BarChart3 className="w-3.5 h-3.5" />Avg: {siteStats.avgScore}</div>
           </div>
           <Link href="/companies" className="text-xs text-slate-500 hover:text-cyan-400 transition-colors hidden sm:block">
             SMR Companies
@@ -85,20 +89,28 @@ export default function Home() {
                 className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${filter === "all" ? "bg-cyan-500/20 text-cyan-400" : "bg-slate-800/50 text-slate-500 hover:text-slate-300"}`}>
                 All ({smrSites.length})
               </button>
-              {Object.entries(typeLabels).map(([key, label]) => (
-                <button key={key} onClick={() => setFilter(key)}
-                  className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${filter === key ? "bg-cyan-500/20 text-cyan-400" : "bg-slate-800/50 text-slate-500 hover:text-slate-300"}`}>
-                  {typeEmoji[key]} {label} ({smrSites.filter(s => s.type === key).length})
-                </button>
-              ))}
+              {Object.entries(typeLabels).map(([key, label]) => {
+                const count = smrSites.filter(s => s.type === key).length;
+                if (count === 0) return null;
+                return (
+                  <button key={key} onClick={() => setFilter(key)}
+                    className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${filter === key ? "bg-cyan-500/20 text-cyan-400" : "bg-slate-800/50 text-slate-500 hover:text-slate-300"}`}>
+                    {typeEmoji[key]} {label} ({count})
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Key Insight */}
           <div className="p-3 border-b border-slate-800/50">
+            <div className="bg-red-500/10 border border-red-900/30 rounded-lg p-3 mb-2">
+              <p className="text-xs text-red-400 font-semibold mb-1">🔴 {siteStats.confirmedProjects} Confirmed Projects</p>
+              <p className="text-xs text-slate-400">Active development with NRC permits, DOE funding, and construction timelines.</p>
+            </div>
             <div className="bg-amber-500/10 border border-amber-900/30 rounded-lg p-3">
               <p className="text-xs text-amber-400 font-semibold mb-1">💡 Key Finding</p>
-              <p className="text-xs text-slate-400">{siteStats.nearCoalPct}% of optimal SMR sites are at retiring coal plants. The grid infrastructure is already there.</p>
+              <p className="text-xs text-slate-400">{siteStats.nearCoalPct}% of candidate sites are at retiring coal plants. The grid infrastructure is already there.</p>
             </div>
           </div>
 
@@ -108,16 +120,22 @@ export default function Home() {
               <button key={site.id} onClick={() => setSelectedSite(site)}
                 className={`w-full text-left p-3 border-b border-slate-800/30 hover:bg-white/5 transition-colors ${selectedSite?.id === site.id ? "bg-cyan-500/5 border-l-2 border-l-cyan-400" : ""}`}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-slate-200">{site.name}</span>
-                  <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium text-slate-200 truncate mr-2">{site.name}</span>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
                     <span className="text-xs font-bold text-cyan-400">{site.score}</span>
                     <ChevronRight className="w-3 h-3 text-slate-700" />
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-center gap-2 text-xs flex-wrap">
                   <span className="text-slate-500">{site.state}</span>
                   <span className="text-slate-700">·</span>
                   <span className="text-slate-500">{typeEmoji[site.type]} {typeLabels[site.type]}</span>
+                  {site.company && (
+                    <>
+                      <span className="text-slate-700">·</span>
+                      <span className="text-slate-400">{site.company}</span>
+                    </>
+                  )}
                 </div>
               </button>
             ))}
@@ -139,76 +157,129 @@ export default function Home() {
           <div className="absolute bottom-4 left-4 bg-[#0d1117]/90 border border-cyan-900/30 rounded-xl p-3 backdrop-blur z-[1000]">
             <p className="text-xs text-slate-500 mb-2 font-semibold uppercase tracking-wider">Site Types</p>
             <div className="space-y-1.5">
-              {Object.entries(typeLabels).map(([key, label]) => (
-                <div key={key} className="flex items-center gap-2 text-xs">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: key === "coal-retirement" ? "#f59e0b" : key === "greenfield" ? "#10b981" : key === "existing-nuclear" ? "#06b6d4" : "#8b5cf6" }} />
-                  <span className="text-slate-400">{typeEmoji[key]} {label}</span>
-                </div>
-              ))}
+              {Object.entries(typeLabels).map(([key, label]) => {
+                const colors: Record<string, string> = {
+                  "coal-retirement": "#f59e0b", "greenfield": "#10b981",
+                  "existing-nuclear": "#06b6d4", "brownfield": "#8b5cf6",
+                  "confirmed-project": "#ef4444",
+                };
+                return (
+                  <div key={key} className="flex items-center gap-2 text-xs">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colors[key] }} />
+                    <span className="text-slate-400">{typeEmoji[key]} {label}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Selected Site Detail */}
+          {/* Selected Site Detail Panel */}
           {selectedSite && (
-            <div className="absolute top-4 right-4 w-80 bg-[#0d1117]/95 border border-cyan-900/30 rounded-xl p-4 backdrop-blur z-[1000] glow-cyan">
+            <div className="absolute top-4 right-4 w-96 bg-[#0d1117]/95 border border-cyan-900/30 rounded-xl p-5 backdrop-blur z-[1000] max-h-[80vh] overflow-y-auto" style={{ boxShadow: "0 0 20px rgba(6,182,212,0.1)" }}>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-base font-bold text-cyan-400">{selectedSite.name}</h3>
-                <button onClick={() => setSelectedSite(null)} className="text-slate-600 hover:text-slate-300">
-                  <X className="w-4 h-4" />
+                <div>
+                  <h3 className="text-lg font-bold text-cyan-400">{selectedSite.name}</h3>
+                  <p className="text-xs text-slate-500">{selectedSite.state} · {typeLabels[selectedSite.type]}</p>
+                </div>
+                <button onClick={() => setSelectedSite(null)} className="text-slate-600 hover:text-slate-300 p-1">
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="space-y-2.5 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Suitability Score</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-20 h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-cyan-400 rounded-full transition-all" style={{ width: `${selectedSite.score}%` }} />
+              {/* Score Bar */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-slate-500">Suitability Score</span>
+                  <span className="text-sm font-bold text-cyan-400">{selectedSite.score}/100</span>
+                </div>
+                <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-cyan-400 rounded-full transition-all duration-500" style={{ width: `${selectedSite.score}%` }} />
+                </div>
+              </div>
+
+              {/* Company / Reactor Info */}
+              {(selectedSite.company || selectedSite.reactor) && (
+                <div className="bg-[#161b22] border border-slate-800/50 rounded-lg p-3 mb-3 space-y-1.5">
+                  {selectedSite.company && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="text-slate-500">Company:</span>
+                      <span className="text-slate-200 font-medium">{selectedSite.company}</span>
                     </div>
-                    <span className="text-cyan-400 font-bold">{selectedSite.score}/100</span>
+                  )}
+                  {selectedSite.reactor && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <Atom className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="text-slate-500">Reactor:</span>
+                      <span className="text-slate-200">{selectedSite.reactor}</span>
+                    </div>
+                  )}
+                  {selectedSite.timeline && (
+                    <div className="flex items-start gap-2 text-xs">
+                      <Calendar className="w-3.5 h-3.5 text-slate-500 mt-0.5" />
+                      <span className="text-slate-500">Timeline:</span>
+                      <span className="text-slate-300 flex-1">{selectedSite.timeline}</span>
+                    </div>
+                  )}
+                  {selectedSite.fundingStatus && (
+                    <div className="flex items-start gap-2 text-xs">
+                      <DollarSign className="w-3.5 h-3.5 text-emerald-500 mt-0.5" />
+                      <span className="text-slate-500">Funding:</span>
+                      <span className="text-emerald-400 flex-1">{selectedSite.fundingStatus}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="bg-[#161b22] rounded-lg p-2.5">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Zap className="w-3 h-3 text-slate-500" />
+                    <span className="text-[10px] text-slate-500 uppercase">Grid Demand</span>
                   </div>
+                  <span className={`text-sm font-medium ${demandColors[selectedSite.gridDemand]}`}>{selectedSite.gridDemand.toUpperCase()}</span>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 flex items-center gap-1"><MapPin className="w-3 h-3" /> State</span>
-                  <span className="text-slate-300">{selectedSite.state}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 flex items-center gap-1"><Zap className="w-3 h-3" /> Grid Demand</span>
-                  <span className={demandColors[selectedSite.gridDemand]}>{selectedSite.gridDemand.toUpperCase()}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 flex items-center gap-1"><Droplets className="w-3 h-3" /> Water Access</span>
-                  <span className="text-slate-300">{selectedSite.waterAccess}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 flex items-center gap-1"><Activity className="w-3 h-3" /> Seismic Risk</span>
-                  <span className={seismicColors[selectedSite.seismicRisk]}>{selectedSite.seismicRisk.toUpperCase()}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Est. Capacity</span>
-                  <span className="text-slate-300">{selectedSite.estimatedCapacity} MW</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Population (50mi)</span>
-                  <span className="text-slate-300">{selectedSite.populationNearby}k</span>
-                </div>
-
-                {selectedSite.retiringPlant && (
-                  <div className="bg-amber-500/10 border border-amber-900/30 rounded-lg p-2 mt-2">
-                    <p className="text-amber-400 font-semibold mb-0.5">⚡ Retiring Plant</p>
-                    <p className="text-slate-400">{selectedSite.retiringPlant}</p>
+                <div className="bg-[#161b22] rounded-lg p-2.5">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Droplets className="w-3 h-3 text-slate-500" />
+                    <span className="text-[10px] text-slate-500 uppercase">Water Access</span>
                   </div>
-                )}
-
-                <div className="pt-2 border-t border-slate-800/50">
-                  <p className="text-slate-400 leading-relaxed">{selectedSite.notes}</p>
+                  <span className="text-sm font-medium text-slate-300">{selectedSite.waterAccess}</span>
                 </div>
+                <div className="bg-[#161b22] rounded-lg p-2.5">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Activity className="w-3 h-3 text-slate-500" />
+                    <span className="text-[10px] text-slate-500 uppercase">Seismic Risk</span>
+                  </div>
+                  <span className={`text-sm font-medium ${seismicColors[selectedSite.seismicRisk]}`}>{selectedSite.seismicRisk.toUpperCase()}</span>
+                </div>
+                <div className="bg-[#161b22] rounded-lg p-2.5">
+                  <div className="flex items-center gap-1 mb-1">
+                    <TrendingUp className="w-3 h-3 text-slate-500" />
+                    <span className="text-[10px] text-slate-500 uppercase">Capacity</span>
+                  </div>
+                  <span className="text-sm font-medium text-slate-300">{selectedSite.estimatedCapacity} MW</span>
+                </div>
+              </div>
+
+              {/* Population */}
+              <div className="flex items-center justify-between text-xs mb-3 px-1">
+                <span className="text-slate-500">Population within 50mi:</span>
+                <span className="text-slate-300">{selectedSite.populationNearby}k</span>
+              </div>
+
+              {/* Retiring Plant */}
+              {selectedSite.retiringPlant && (
+                <div className="bg-amber-500/10 border border-amber-900/30 rounded-lg p-3 mb-3">
+                  <p className="text-xs text-amber-400 font-semibold mb-0.5">⚡ Retiring Coal Plant</p>
+                  <p className="text-xs text-slate-400">{selectedSite.retiringPlant}</p>
+                </div>
+              )}
+
+              {/* Notes */}
+              <div className="border-t border-slate-800/50 pt-3">
+                <p className="text-xs text-slate-400 leading-relaxed">{selectedSite.notes}</p>
               </div>
             </div>
           )}

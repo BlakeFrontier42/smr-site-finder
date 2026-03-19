@@ -3,19 +3,12 @@
 import { useEffect, useState } from "react";
 import { smrSites, SMRSite } from "@/data/sites";
 
-// Dynamic import needed for Leaflet (SSR incompatible)
-let L: typeof import("leaflet") | null = null;
-let MapContainer: typeof import("react-leaflet").MapContainer | null = null;
-let TileLayer: typeof import("react-leaflet").TileLayer | null = null;
-let CircleMarker: typeof import("react-leaflet").CircleMarker | null = null;
-let Popup: typeof import("react-leaflet").Popup | null = null;
-let Tooltip: typeof import("react-leaflet").Tooltip | null = null;
-
 const typeColors: Record<string, string> = {
   "coal-retirement": "#f59e0b",
   "brownfield": "#8b5cf6",
   "greenfield": "#10b981",
   "existing-nuclear": "#06b6d4",
+  "confirmed-project": "#ef4444",
 };
 
 const typeLabels: Record<string, string> = {
@@ -23,6 +16,7 @@ const typeLabels: Record<string, string> = {
   "brownfield": "Brownfield",
   "greenfield": "Greenfield",
   "existing-nuclear": "Existing Nuclear",
+  "confirmed-project": "Confirmed Project",
 };
 
 interface SiteMapProps {
@@ -33,20 +27,13 @@ interface SiteMapProps {
 
 export default function SiteMap({ selectedSite, onSelectSite, filter }: SiteMapProps) {
   const [loaded, setLoaded] = useState(false);
-  const [components, setComponents] = useState<{
-    MapContainer: typeof import("react-leaflet").MapContainer;
-    TileLayer: typeof import("react-leaflet").TileLayer;
-    CircleMarker: typeof import("react-leaflet").CircleMarker;
-    Popup: typeof import("react-leaflet").Popup;
-    Tooltip: typeof import("react-leaflet").Tooltip;
-  } | null>(null);
+  const [components, setComponents] = useState<any>(null);
 
   useEffect(() => {
     Promise.all([
       import("leaflet"),
       import("react-leaflet"),
     ]).then(([leaflet, rl]) => {
-      L = leaflet;
       setComponents({
         MapContainer: rl.MapContainer,
         TileLayer: rl.TileLayer,
@@ -67,7 +54,6 @@ export default function SiteMap({ selectedSite, onSelectSite, filter }: SiteMapP
   }
 
   const { MapContainer: MC, TileLayer: TL, CircleMarker: CM, Popup: P, Tooltip: TT } = components;
-
   const filtered = filter === "all" ? smrSites : smrSites.filter(s => s.type === filter);
 
   return (
@@ -80,7 +66,7 @@ export default function SiteMap({ selectedSite, onSelectSite, filter }: SiteMapP
         />
         {filtered.map((site) => {
           const isSelected = selectedSite?.id === site.id;
-          const radius = 6 + (site.score / 20);
+          const radius = site.type === "confirmed-project" ? 10 + (site.score / 25) : 6 + (site.score / 20);
           return (
             <CM
               key={site.id}
@@ -88,40 +74,60 @@ export default function SiteMap({ selectedSite, onSelectSite, filter }: SiteMapP
               radius={isSelected ? radius + 4 : radius}
               fillColor={typeColors[site.type]}
               color={isSelected ? "#ffffff" : typeColors[site.type]}
-              weight={isSelected ? 3 : 1.5}
+              weight={isSelected ? 3 : site.type === "confirmed-project" ? 2.5 : 1.5}
               opacity={0.9}
-              fillOpacity={isSelected ? 0.9 : 0.6}
+              fillOpacity={isSelected ? 0.9 : site.type === "confirmed-project" ? 0.8 : 0.6}
               eventHandlers={{ click: () => onSelectSite(site) }}
             >
-              <TT direction="top" offset={[0, -10]} className="custom-tooltip">
-                <div className="bg-[#0d1117] text-slate-200 px-2 py-1 rounded text-xs border border-cyan-900/30">
+              <TT direction="top" offset={[0, -10]}>
+                <div style={{ background: "#0d1117", color: "#e2e8f0", padding: "4px 8px", borderRadius: "6px", fontSize: "12px", border: "1px solid rgba(6,182,212,0.3)" }}>
                   <strong>{site.name}</strong> — Score: {site.score}
+                  {site.company && <><br/><span style={{ color: "#94a3b8" }}>{site.company}</span></>}
                 </div>
               </TT>
               <P>
-                <div className="min-w-[220px]">
-                  <h3 className="text-cyan-400 font-bold text-sm mb-1">{site.name}</h3>
-                  <p className="text-xs text-slate-400 mb-2">{site.state} · {typeLabels[site.type]}</p>
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Score:</span>
-                      <span className="text-cyan-400 font-bold">{site.score}/100</span>
+                <div style={{ minWidth: "240px", maxWidth: "320px" }}>
+                  <h3 style={{ color: typeColors[site.type], fontWeight: "bold", fontSize: "14px", marginBottom: "4px" }}>{site.name}</h3>
+                  <p style={{ fontSize: "11px", color: "#94a3b8", marginBottom: "8px" }}>{site.state} · {typeLabels[site.type]}</p>
+                  <div style={{ fontSize: "11px", lineHeight: "1.6" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#64748b" }}>Score:</span>
+                      <span style={{ color: "#06b6d4", fontWeight: "bold" }}>{site.score}/100</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Grid Demand:</span>
-                      <span className="text-slate-300">{site.gridDemand}</span>
+                    {site.company && (
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "#64748b" }}>Company:</span>
+                        <span style={{ color: "#e2e8f0" }}>{site.company}</span>
+                      </div>
+                    )}
+                    {site.reactor && (
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "#64748b" }}>Reactor:</span>
+                        <span style={{ color: "#e2e8f0" }}>{site.reactor}</span>
+                      </div>
+                    )}
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#64748b" }}>Capacity:</span>
+                      <span style={{ color: "#e2e8f0" }}>{site.estimatedCapacity} MW</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Water:</span>
-                      <span className="text-slate-300">{site.waterAccess}</span>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#64748b" }}>Grid Demand:</span>
+                      <span style={{ color: "#e2e8f0" }}>{site.gridDemand}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Capacity:</span>
-                      <span className="text-slate-300">{site.estimatedCapacity} MW</span>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#64748b" }}>Water:</span>
+                      <span style={{ color: "#e2e8f0" }}>{site.waterAccess}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#64748b" }}>Seismic:</span>
+                      <span style={{ color: site.seismicRisk === "low" ? "#10b981" : site.seismicRisk === "moderate" ? "#f59e0b" : "#ef4444" }}>{site.seismicRisk}</span>
                     </div>
                   </div>
                   {site.retiringPlant && (
-                    <p className="text-xs text-amber-400 mt-2">⚡ {site.retiringPlant}</p>
+                    <p style={{ fontSize: "11px", color: "#f59e0b", marginTop: "6px" }}>⚡ {site.retiringPlant}</p>
+                  )}
+                  {site.timeline && (
+                    <p style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px" }}>📅 {site.timeline}</p>
                   )}
                 </div>
               </P>
